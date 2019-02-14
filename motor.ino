@@ -1,108 +1,121 @@
-const int MOTOR_ENABLE_A = D3;
-const int MOTOR_ENABLE_B = D4;
+const int MOTOR_DIR_A = 21;
+const int MOTOR_PWM_A = 19;
+const int MOTOR_BRK_A = 18;
 
-const int MOTORA_FWD_PIN = D6;
-const int MOTORA_REV_PIN = D5;
+const int MOTOR_DIR_B = 4;
+const int MOTOR_PWM_B = 16;
+const int MOTOR_BRK_B = 15;
 
-const int MOTORB_FWD_PIN = D7;
-const int MOTORB_REV_PIN = D8;
+const int MOTOR_A_PWM_CHANNEL = 2;
+const int MOTOR_B_PWM_CHANNEL = 3;
 
-int speed_A=600,speed_B=600;
+const int PWM_CHANNEL_FREQ = 5000;
+const int PWM_CHANNEL_RESOLUTION = 8;
 
-void initialiseMotor(void)
+const int MOTOR_DIR_FORWARD = 0;
+const int MOTOR_DIR_REVERSE = 1;
+
+const int turn_speed_low = 170;
+const int turn_speed_high = 170;
+
+void initialiseMotor(void) 
 {
-   pinMode(MOTOR_ENABLE_A, OUTPUT);
-   pinMode(MOTOR_ENABLE_B, OUTPUT);
+   pinMode(MOTOR_DIR_A, OUTPUT);
+   pinMode(MOTOR_PWM_A, OUTPUT);   
+   pinMode(MOTOR_BRK_A, OUTPUT);
    
-   pinMode(MOTORA_FWD_PIN, OUTPUT);
-   pinMode(MOTORA_REV_PIN, OUTPUT);
+   pinMode(MOTOR_DIR_B, OUTPUT);   
+   pinMode(MOTOR_PWM_B, OUTPUT);
+   pinMode(MOTOR_BRK_B, OUTPUT);
    
-   pinMode(MOTORB_FWD_PIN, OUTPUT);
-   pinMode(MOTORB_REV_PIN, OUTPUT);
+  // configure LED PWM functionalitites
+   ledcSetup(MOTOR_A_PWM_CHANNEL, PWM_CHANNEL_FREQ, PWM_CHANNEL_RESOLUTION);
+   ledcSetup(MOTOR_B_PWM_CHANNEL, PWM_CHANNEL_FREQ, PWM_CHANNEL_RESOLUTION);
 
-   analogWrite(MOTOR_ENABLE_A, 0);
-   analogWrite(MOTOR_ENABLE_B, 0);   
+   // attach the channel to the GPIO2 to be controlled
+   ledcAttachPin(MOTOR_PWM_A, MOTOR_A_PWM_CHANNEL);
+   ledcAttachPin(MOTOR_PWM_B, MOTOR_B_PWM_CHANNEL);
+
+   ledcWrite(MOTOR_A_PWM_CHANNEL, 0);
+   ledcWrite(MOTOR_B_PWM_CHANNEL, 0);   
 }
-
-void motorOperation(String command)
+void removeBrake(void)
 {
-    Serial.println(command);         
-   analogWrite(MOTOR_ENABLE_A, speed_A);
-   analogWrite(MOTOR_ENABLE_B, speed_B); 
-        
+    digitalWrite(MOTOR_BRK_A, LOW);
+    digitalWrite(MOTOR_BRK_B, LOW);  
+}
+void applyBrakes(void)
+{
+    digitalWrite(MOTOR_BRK_A, HIGH);
+    digitalWrite(MOTOR_BRK_B, HIGH);  
+}
+void speedControl(int speedValA,int speedValB)
+{
+    ledcWrite(MOTOR_A_PWM_CHANNEL, speedValA);//stop the current rotation first
+    ledcWrite(MOTOR_B_PWM_CHANNEL, speedValB);//stop the current rotation first      
+}
+void motorOperation(String command, int speedA, int speedB)
+{
+    Serial.println(command); 
+    speedControl(0,0);    
+    applyBrakes(); 
+      
+    delay(100);
+    
     if(command == "FORWARD")
-    {                  
-        Serial.println("forwarding...");
-        digitalWrite(MOTORA_FWD_PIN, HIGH); 
-        digitalWrite(MOTORA_REV_PIN, LOW); 
-        
-        digitalWrite(MOTORB_FWD_PIN, HIGH); 
-        digitalWrite(MOTORB_REV_PIN, LOW);  
+    {   //Serial.println("forwarding...");
+        digitalWrite(MOTOR_DIR_A, MOTOR_DIR_FORWARD); 
+        digitalWrite(MOTOR_DIR_B, MOTOR_DIR_FORWARD); 
+        removeBrake();        
+        speedControl(speedA,speedB);
     }
     else if(command == "BACK")
-    {
-        digitalWrite(MOTORA_FWD_PIN, LOW); //fwd
-        digitalWrite(MOTORA_REV_PIN, HIGH); //fwd
-        
-        digitalWrite(MOTORB_FWD_PIN, LOW); 
-        digitalWrite(MOTORB_REV_PIN, HIGH); 
+    {        
+        digitalWrite(MOTOR_DIR_A, MOTOR_DIR_REVERSE); 
+        digitalWrite(MOTOR_DIR_B, MOTOR_DIR_REVERSE); 
+        removeBrake();
+        speedControl(speedA,speedB);
      }
      else if(command == "LEFT")
-     {
-        digitalWrite(MOTORA_FWD_PIN, LOW); 
-        digitalWrite(MOTORA_REV_PIN, HIGH); 
-        
-        digitalWrite(MOTORB_FWD_PIN, HIGH); 
-        digitalWrite(MOTORB_REV_PIN, LOW); 
+     {     
+        removeBrake();
+        digitalWrite(MOTOR_DIR_A, MOTOR_DIR_REVERSE); 
+        digitalWrite(MOTOR_DIR_B, MOTOR_DIR_FORWARD);         
+        speedControl(speedA,speedB);
      }
      else if(command == "RIGHT")
-     {      
-        digitalWrite(MOTORA_FWD_PIN, HIGH); 
-        digitalWrite(MOTORA_REV_PIN, LOW); 
-        
-        digitalWrite(MOTORB_FWD_PIN, LOW); 
-        digitalWrite(MOTORB_REV_PIN, HIGH);         
-     }
-     else if(command == "ROTATE")
-     {
-        digitalWrite(MOTORA_FWD_PIN, HIGH); 
-        digitalWrite(MOTORA_REV_PIN, LOW); 
-        digitalWrite(MOTORB_FWD_PIN, LOW); 
-        digitalWrite(MOTORB_REV_PIN, LOW); 
-     }
+     {     
+        removeBrake();
+        digitalWrite(MOTOR_DIR_A, MOTOR_DIR_FORWARD); 
+        digitalWrite(MOTOR_DIR_B, MOTOR_DIR_REVERSE); 
+        speedControl(speedA,speedB);
+     }    
      else if(command == "STOP")
      {
-        analogWrite(MOTOR_ENABLE_A, 0);
-        analogWrite(MOTOR_ENABLE_B, 0);
-        digitalWrite(MOTORA_FWD_PIN, LOW); 
-        digitalWrite(MOTORA_REV_PIN, LOW); 
-        digitalWrite(MOTORB_FWD_PIN, LOW); 
-        digitalWrite(MOTORB_REV_PIN, LOW); 
+      
      }  
      else if(command == "SPEEDL")
      {
-          speed_A = 512;
-          speed_B = 512;
-          analogWrite(MOTOR_ENABLE_A, speed_A);
-          analogWrite(MOTOR_ENABLE_B, speed_B); 
+          speed_A = 140;
+          speed_B = 140;
+          ledcWrite(MOTOR_A_PWM_CHANNEL, speedA);
+          ledcWrite(MOTOR_B_PWM_CHANNEL, speedB); 
      }
      else if(command == "SPEEDM")
      {
-          speed_A = 800;
-          speed_B = 800;
-          analogWrite(MOTOR_ENABLE_A, speed_A);
-          analogWrite(MOTOR_ENABLE_B, speed_B); 
+          speed_A = 190;
+          speed_B = 190;
+          ledcWrite(MOTOR_A_PWM_CHANNEL, speedA);
+          ledcWrite(MOTOR_B_PWM_CHANNEL, speedB); 
      }
      else if(command == "SPEEDH")
      {
-          speed_A = 1000;
-          speed_B = 1000;
-          analogWrite(MOTOR_ENABLE_A, speed_A);
-          analogWrite(MOTOR_ENABLE_B, speed_B); 
-     }
-     else
-     {
-        analogWrite(MOTOR_ENABLE_A, 0);
-        analogWrite(MOTOR_ENABLE_B, 0);
-     }
+          speed_A = 250;
+          speed_B = 250;
+          ledcWrite(MOTOR_A_PWM_CHANNEL, speedA);
+          ledcWrite(MOTOR_B_PWM_CHANNEL, speedB); 
+     }   
 }
+
+
+
