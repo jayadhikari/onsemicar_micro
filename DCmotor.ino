@@ -55,50 +55,50 @@ void speedControl(int speedVal)
 void motorOperation(String command)
 {
     Serial.println(command); 
-    speedControl(0);    
-    applyBrakes(); 
-      
-    delay(100);
-
     if(collisionDetected == false)
-    {    
-      if(command == "FORWARD")
-      {   //Serial.println("forwarding...");
-          digitalWrite(MOTOR_DIR_A, MOTOR_DIR_FORWARD); 
-          digitalWrite(MOTOR_DIR_B, MOTOR_DIR_FORWARD); 
-          removeBrake();  
-          speedControl(carSpeed);              
-      }
-      else if(command == "BACK")
-      {        
-          digitalWrite(MOTOR_DIR_A, MOTOR_DIR_REVERSE); 
-          digitalWrite(MOTOR_DIR_B, MOTOR_DIR_REVERSE); 
-          removeBrake();
-          speedControl(carSpeed);
-       }    
-       else if(command == "STOP")
+    {
+       if(command == "SPEEDL")
        {
-        
-       }  
-       else if(command == "SPEEDL")
-       {
-            carSpeed = LOW_SPEED;          
-            ledcWrite(MOTOR_A_PWM_CHANNEL, carSpeed);
-            ledcWrite(MOTOR_B_PWM_CHANNEL, carSpeed); 
+            carSpeed = LOW_SPEED;    
+            speedControl(carSpeed);
        }
        else if(command == "SPEEDM")
        {         
             carSpeed = MEDIUM_SPEED;
-            ledcWrite(MOTOR_A_PWM_CHANNEL, carSpeed);
-            ledcWrite(MOTOR_B_PWM_CHANNEL, carSpeed); 
+            speedControl(carSpeed);
        }
        else if(command == "SPEEDH")
        {
             carSpeed = HIGH_SPEED;          
-            ledcWrite(MOTOR_A_PWM_CHANNEL, carSpeed);
-            ledcWrite(MOTOR_B_PWM_CHANNEL, carSpeed); 
-       }    
-    }   
+            speedControl(carSpeed);
+       }
+       else if(command == "FORWARD")
+        {   
+            speedControl(0);    
+            applyBrakes();         
+            delay(100);
+            digitalWrite(MOTOR_DIR_A, MOTOR_DIR_FORWARD); 
+            digitalWrite(MOTOR_DIR_B, MOTOR_DIR_FORWARD); 
+            removeBrake();  
+            speedControl(carSpeed);              
+        }
+        else if(command == "BACK")
+        {        
+            speedControl(0);    
+            applyBrakes();         
+            delay(100);
+            digitalWrite(MOTOR_DIR_A, MOTOR_DIR_REVERSE); 
+            digitalWrite(MOTOR_DIR_B, MOTOR_DIR_REVERSE); 
+            removeBrake();
+            speedControl(carSpeed);
+         }    
+         else if(command == "STOP")
+         {
+            speedControl(0);    
+            applyBrakes();         
+            delay(100);
+         }   
+    } 
 }
 
 
